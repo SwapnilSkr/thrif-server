@@ -9,6 +9,8 @@ import { updateProfile, ticketAdd, ticketList } from "../controllers/shop/settin
 import { updatePreference, addressAdd, addressList, addressEdit, addressRemove } from "../controllers/shop/settingCon.js";
 
 import verifyUser from "../middleware/rbac.js";
+import { getConversations, getMessages, sendMessage, createConversation } from '../controllers/chatController.js';
+
 const userRouter = express.Router();
 
 // User signup
@@ -61,5 +63,11 @@ userRouter.post("/sendChatNotification", sendChatNotificationUser);
 //Resolution Center 
 userRouter.post("/ticketAdd", ticketAdd);
 userRouter.get("/ticketList", ticketList);
+
+// Chat/Message endpoints
+userRouter.get('/conversations', getConversations);
+userRouter.post('/conversations', createConversation);
+userRouter.get('/conversations/:conversationId/messages', getMessages);
+userRouter.post('/conversations/:conversationId/messages', sendMessage);
 
 export default userRouter;
