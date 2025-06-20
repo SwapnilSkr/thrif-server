@@ -80,7 +80,7 @@ const userSchema = new mongoose.Schema(
       default: false
     },
     interest: {
-      type: [{ type: Schema.Types.ObjectId, ref: "styles" }],
+      type: [String],
       default: [],
     },
     brandIds: {
