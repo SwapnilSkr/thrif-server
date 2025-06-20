@@ -16,10 +16,10 @@ process.on("SIGINT", async () => {
   try {
     await mongoose.disconnect();
     console.log("Disconnected from MongoDB".red);
-    process.exit(0); // Exit process gracefully
+    process.exit(0); 
   } catch (error) {
     console.error("Error disconnecting from MongoDB:", error.message);
-    process.exit(1); // Exit process with failure
+    process.exit(1); 
   }
 });
 
@@ -33,7 +33,6 @@ if (isProduction && cluster.isPrimary) {
   });
 } else {
   app.listen(port, () => {
-    // console.log(`Server is listening on port ${port}!`);
     console.log(`Server is running on ${getLocalIp()}`);
   });
 }

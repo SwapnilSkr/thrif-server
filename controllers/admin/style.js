@@ -4,8 +4,7 @@ import brandModel from "../../models/brandModel.js";
 import categoryModel from "../../models/categoryModel.js";
 import hashtagModel from "../../models/hashtagModel.js";
 import SubCategory from "../../models/subCategoryModel.js";
-import parcelSizes from "../../models/parcelSizeModel.js";
-import Banner from "../../models/bannerModel.js";
+
 const getListByType = expressAsyncHandler(async (req, res) => {
     try {
         const { type } = req.params;
@@ -18,76 +17,23 @@ const getListByType = expressAsyncHandler(async (req, res) => {
         }
         let data = []
         if (type == "category") {
-            // data = await categoryModel.find({ status: "active" });
-            // data = await categoryModel.aggregate([
-            //     { $match: { status: "active" } },
-            //     {
-            //         $lookup: {
-            //             from: "subcategories",
-            //             let: { categoryId: "$_id" },
-            //             pipeline: [
-            //                 {
-            //                     $match: {
-            //                         $expr: {
-            //                             $eq: ["$categoryId", "$$categoryId"]
-            //                         },
-            //                         subcategoryId: null
-            //                     }
-            //                 },
-            //                 { $match: { status: "active" } },
-            //                 {
-            //                     $lookup: {
-            //                         from: "subcategories",
-            //                         let: { parentId: { $toString: "$_id" } }, // convert _id to string
-            //                         pipeline: [
-            //                             {
-            //                                 $match: {
-            //                                     $expr: {
-            //                                         $eq: ["$subcategoryId", "$$parentId"] // compare string to string
-            //                                     }
-            //                                 }
-            //                             }
-            //                         ],
-            //                         as: "child_subCategories"
-            //                     }
-            //                 }
-            //             ],
-            //             as: "subCategories"
-            //         }
-            //     }
-            // ]);
-            const categories = await categoryModel.find({ status: "active" }).lean();
-            // const finalResult = [];
-
-            for (const category of categories) {
-                const subCategories = await SubCategory.find({
-                    categoryId: category._id, subcategoryId: null,
-                    status: "active"
-                }).lean().sort({ createdAt: -1 });
-
-                // Now get child subcategories for each subcategory
-                for (const subCat of subCategories) {
-                    const childSubCategories = await SubCategory.find({
-                        subcategoryId: subCat._id.toString(),
-                        status: "active"
-                    }).lean().sort({ createdAt: -1 });
-
-                    subCat.child_subCategories = childSubCategories; // attach child subcategories
+            data = await categoryModel.aggregate([
+                { $match: { status: "active" } },
+                {
+                    $lookup: {
+                        from: "subcategories",
+                        localField: "_id",
+                        foreignField: "categoryId",
+                        as: "subCategories"
+                    }
                 }
-
-                data.push({
-                    ...category,
-                    subCategories: subCategories // attach all enriched subcategories
-                });
-            }
+            ])
         } else if (type == "brand") {
-            data = await brandModel.find({ status: "active" }).sort({ createdAt: -1 });
+            data = await brandModel.find({ status: "active" });
         } else if (type == "style") {
-            data = await styleModel.find({ status: "active" }).sort({ createdAt: -1 });
-        } else if (type == "hashtag") {
-            data = await hashtagModel.find({ status: "active" }).sort({ createdAt: -1 });
+            data = await styleModel.find({ status: "active" });
         } else {
-            data = await parcelSizes.find({ status: "active" }).sort({ createdAt: -1 });
+            data = await hashtagModel.find({ status: "active" });
         }
         return res.status(200).send({
             message: locals.list,
@@ -95,6 +41,7 @@ const getListByType = expressAsyncHandler(async (req, res) => {
             data: data
         })
     } catch (error) {
+        console.log(error);
         return res.status(400).send({
             message: locals.server_error,
             success: false,
