@@ -60,6 +60,63 @@ const register = expressAsyncHandler(async (req, res) => {
   }
 });
 
+const registerV2 = expressAsyncHandler(async (req, res) => {
+  try {
+    const {
+      name,
+      bio,
+      gstNumber,
+      panNumber,
+      aadharNumber,
+      billingAddress,
+      aadharVerificationCode,
+      paymentMethode,
+      paymentDetails,
+      profilePic,
+    } = req.body;
+    const sellerProfile = await sellerModel.findOne({ ownerId: req.user._id });
+
+    if (aadharNumber && sellerProfile) {
+      // const otp = Math.floor(100000 + Math.random() * 900000);
+      // let aadharNumberVerify = await sendAadharOTP(aadharNumber);
+      // if (!aadharNumberVerify)
+      //     return res.status(200).send({ message: locals.valid_aadhar, success: false, data: null });
+      const aadharNumberExist = await sellerModel.findOne({ aadharNumber });
+      if (sellerProfile && aadharNumber == sellerProfile.aadharNumber) {
+        return res.status(200).send({
+          message: locals.otp_send,
+          success: true,
+          data: null,
+        });
+      }
+      if (aadharNumberExist) {
+        return res.status(200).send({
+          message: locals.aadharNumber_exists,
+          success: false,
+          data: null,
+        });
+      }
+      return res
+        .status(200)
+        .send({ message: locals.aadhar_otp, success: true, data: null });
+    }
+    if (!sellerProfile) {
+      req.body.ownerId = req.user._id;
+      await sellerModel.create(req.body);
+    } else {
+      await sellerModel.updateOne({ ownerId: req.user._id }, req.body);
+    }
+    return res
+      .status(200)
+      .send({ message: locals.seller_details_save, success: true, data: null });
+  } catch (error) {
+    console.log(error)
+    return res
+      .status(400)
+      .send({ message: locals.server_error, success: false, data: null });
+  }
+});
+
 const verifyAadharOTP = expressAsyncHandler(async (req, res) => {
   try {
     const { aadharNumber, otp, txnId } = req.body;
@@ -672,6 +729,7 @@ const getDemographicsOverview = expressAsyncHandler(async (req, res) => {
 
 export {
   register,
+  registerV2,
   verifyAadharOTP,
   getProfile,
   followUnfollowSeller,
